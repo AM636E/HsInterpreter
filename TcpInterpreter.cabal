@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c05c9a74b223adf2e8945d50fb783ec5a8be4759a07d0dbcca9e89763c399952
+-- hash: 1aa49171cfa25f668f2e1b8e0cc232b3254b38e0e716d2bb170569f8e2b289fa
 
 name:           TcpInterpreter
 version:        0.1.0.0
@@ -27,6 +27,8 @@ source-repository head
 
 library
   exposed-modules:
+      Rpn
+      RpnServer
       Server
   other-modules:
       Paths_TcpInterpreter
@@ -36,6 +38,7 @@ library
       base >=4.7 && <5
     , bytestring
     , network >=3.1
+    , parsec
     , text
   default-language: Haskell2010
 
@@ -51,6 +54,7 @@ executable TcpInterpreter-exe
     , base >=4.7 && <5
     , bytestring
     , network >=3.1
+    , parsec
     , text
   default-language: Haskell2010
 
@@ -67,5 +71,6 @@ test-suite TcpInterpreter-test
     , base >=4.7 && <5
     , bytestring
     , network >=3.1
+    , parsec
     , text
   default-language: Haskell2010

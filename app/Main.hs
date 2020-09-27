@@ -1,5 +1,6 @@
 module Main where
 
+import RpnServer (startRpnServer)
 
 main :: IO ()
-main = putStrLn "Started"
+main = startRpnServer

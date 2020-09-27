@@ -1,26 +1,28 @@
 module Server
   ( startServer,
+    HandlerFunc,
   )
 where
 
-import Control.Concurrent ( withMVar, forkIO, newMVar )
+import Control.Concurrent (forkIO, newMVar, withMVar)
 import Data.ByteString (ByteString)
 import Data.Text (pack, unpack)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Network.Socket
-    ( setSocketOption,
-      accept,
-      bind,
-      listen,
-      socket,
-      SocketOption(ReuseAddr),
-      Family(AF_INET),
-      SockAddr(SockAddrInet),
-      Socket,
-      SocketType(Stream) )
+  ( Family (AF_INET),
+    SockAddr (SockAddrInet),
+    Socket,
+    SocketOption (ReuseAddr),
+    SocketType (Stream),
+    accept,
+    bind,
+    listen,
+    setSocketOption,
+    socket,
+  )
 import Network.Socket.ByteString (recv, sendAllTo)
 
-type HandlerFunc = (Socket, SockAddr) -> String -> IO ()
+type HandlerFunc = String -> Either String String
 
 startServer :: HandlerFunc -> IO ()
 startServer handlerFunc = do
@@ -31,9 +33,6 @@ startServer handlerFunc = do
   lock <- newMVar ()
   processRequests lock sock
   where
-    handleMessage lock addr message =
-      withMVar lock (\a -> handlerFunc addr message >> return a)
-
     processRequests lock mastersock = do
       conn <- accept mastersock
       putStrLn $ "Connected client " ++ (show $ snd conn)
@@ -44,8 +43,13 @@ startServer handlerFunc = do
     processMessages lock (conSock, addr) = do
       byteStr <- receiveMessage conSock
       putStrLn $ "Received message: " ++ (convertToString byteStr)
-      handlerFunc (conSock, addr) (convertToString byteStr)
-
+      withMVar
+        lock
+        ( \a -> case handlerFunc $ convertToString byteStr of
+            Right error -> sendUtf8String ("Error " ++ error) (conSock, addr)
+            Left result -> sendUtf8String result (conSock, addr)
+        )
+    -- TODO: handle message parts
     receiveMessage sock =
       recv sock 1024
 
