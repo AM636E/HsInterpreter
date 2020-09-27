@@ -1,3 +1,3 @@
 # TcpInterpreter
 
-A simple tcp server that interprets arithmetical equations.
+A simple tcp server that interprets arithmetical expressions.
