@@ -9,27 +9,35 @@ import Data.ByteString (ByteString)
 import Data.Text (pack, unpack)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Network.Socket
-  ( Family (AF_INET),
-    SockAddr (SockAddrInet),
-    Socket,
-    SocketOption (ReuseAddr),
-    SocketType (Stream),
-    accept,
-    bind,
-    listen,
-    setSocketOption,
-    socket,
-  )
+    ( defaultHints,
+      getAddrInfo,
+      setSocketOption,
+      accept,
+      bind,
+      listen,
+      socket,
+      defaultProtocol,
+      AddrInfo(addrFlags, addrFamily, addrAddress),
+      AddrInfoFlag(AI_PASSIVE),
+      SocketOption(ReuseAddr),
+      SockAddr,
+      Socket,
+      SocketType(Stream) )
 import Network.Socket.ByteString (recv, sendAllTo)
 
 type HandlerFunc = String -> Either String String
 
-startServer :: HandlerFunc -> IO ()
-startServer handlerFunc = do
-  sock <- socket AF_INET Stream 0
+startServer :: String -> HandlerFunc -> IO ()
+startServer port handlerFunc = do
+  addrInfos <- getAddrInfo (Just (defaultHints {addrFlags = [AI_PASSIVE]})) Nothing (Just port)
+
+  let addrInfo = head addrInfos
+
+  sock <- socket (addrFamily addrInfo) Stream defaultProtocol
   setSocketOption sock ReuseAddr 1
-  bind sock (SockAddrInet 5001 0)
-  listen sock 2
+  bind sock (addrAddress addrInfo)
+  listen sock 5
+
   lock <- newMVar ()
   processRequests lock sock
   where
